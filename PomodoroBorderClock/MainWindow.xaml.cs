@@ -25,7 +25,9 @@ namespace PomodoroBorderTimer
     {
         private System.Windows.Forms.NotifyIcon notify_icon;
         private DispatcherTimer dispatcher_timer = new DispatcherTimer();
-        private TimerInfo[] timer_info;
+        private TimerInfo[] timer_sequence;
+        private Color[] work_colors;
+        private Color[] break_colors;
 
         public MainWindow()
         {
@@ -44,9 +46,11 @@ namespace PomodoroBorderTimer
         {
             // Set everything up
             var timer_sequence = ConfigurationManager.AppSettings.Get("TimerSequence");
-            timer_info = ParseTimerSequence(timer_sequence);
+            this.timer_sequence = ParseTimerSequence(timer_sequence);
             var work_colors = ConfigurationManager.AppSettings.Get("WorkColors");
+            this.work_colors = ParseColors(work_colors);
             var break_colors = ConfigurationManager.AppSettings.Get("BreakColors");
+            this.break_colors = ParseColors(break_colors);
 
             // Start the timer
             dispatcher_timer.Tick += Dispatcher_timer_Tick;
@@ -60,6 +64,29 @@ namespace PomodoroBorderTimer
         {
             public TimerTypes type;
             public TimeSpan time;
+        }
+
+        private Color[] ParseColors(string colors)
+        {
+            List<Color> result = new List<Color>();
+            const string pattern = @"(rgba?)\((\d{1,3}), ?(\d{1,3}), ?(\d{1,3})(?:, ?(\d{1,3}))?\)";
+            Match m = Regex.Match(colors, pattern);
+            while (m.Success)
+            {
+                var type = m.Groups[1].Value;
+                var r = byte.Parse(m.Groups[2].Value);
+                var g = byte.Parse(m.Groups[3].Value);
+                var b = byte.Parse(m.Groups[4].Value);
+                if (type == "rgb")
+                    result.Add(Color.FromRgb(r, g, b));
+                else
+                {
+                    var a = byte.Parse(m.Groups[5].Value);
+                    result.Add(Color.FromArgb(a, r, g, b));
+                }
+                m = m.NextMatch();
+            }
+            return result.ToArray();
         }
 
         private TimerInfo[] ParseTimerSequence(string sequence)
@@ -115,6 +142,7 @@ namespace PomodoroBorderTimer
         private void Dispatcher_timer_Tick(object sender, EventArgs e)
         {
             // update
+            SetColor(work_colors[0]);
         }
 
         private void Notify_icon_Click(object sender, EventArgs e)
