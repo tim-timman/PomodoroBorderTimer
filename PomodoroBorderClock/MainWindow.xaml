@@ -5,18 +5,19 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PomodoroBorderTimer"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350"  Width="525" BorderThickness="0" WindowStartupLocation="CenterScreen" WindowState="Maximized" Background="{x:Null}" ResizeMode="NoResize" Margin="0" Foreground="{x:Null}" Closing="PomodoroBorderTimer_Closing" AllowsTransparency="True" WindowStyle="None" Topmost="True" ShowInTaskbar="False" IsTabStop="False" TabIndex="0" IsHitTestVisible="False" Focusable="False">
+        Title="MainWindow" Height="350" Width="525" BorderThickness="0" WindowStartupLocation="CenterScreen" WindowState="Maximized" Background="{x:Null}" ResizeMode="NoResize" Margin="0" Foreground="{x:Null}" Closing="PomodoroBorderTimer_Closing" AllowsTransparency="True" WindowStyle="None" Topmost="True" ShowInTaskbar="False" IsTabStop="False" TabIndex="0" IsHitTestVisible="False" Focusable="False" Loaded="PomodoroBorderTimer_Loaded">
     <Grid Margin="1">
         <Grid.ContextMenu>
             <ContextMenu Name="menu">
-                <MenuItem Header="Restart Timer" Click="Restart_Timer_Click" />
+                <MenuItem Name="PlayPause" Header="Pause Timer" Click="PlayPause_Click" />
+                <MenuItem Header="Reset Timer" Click="Restart_Timer_Click" />
                 <Separator />
-                <MenuItem Header="Close" Click="MenuItem_Click" />
+                <MenuItem Header="Close" Click="Close_Click" />
             </ContextMenu>
         </Grid.ContextMenu>
-        <Border Name="myBorder" Margin="1" BorderBrush="Red" BorderThickness="5,5,5,0" Opacity="0.7"/>
+        <Border Name="outline" Margin="1" BorderBrush="Red" BorderThickness="5,5,5,0"/>
         <Grid.OpacityMask>
-            <VisualBrush Visual="{Binding ElementName=myBorder}" />
+            <VisualBrush Visual="{Binding ElementName=outline}" />
         </Grid.OpacityMask>
     </Grid>
 </Window>
