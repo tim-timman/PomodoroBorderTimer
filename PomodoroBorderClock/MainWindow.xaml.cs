@@ -28,6 +28,10 @@ namespace PomodoroBorderTimer
         private TimerInfo[] timer_sequence;
         private Color[] work_colors;
         private Color[] break_colors;
+        private double width;
+        private TimeSpan time_remaining;
+        private DateTime then;
+        private int current_timer_index = 0;
 
         public MainWindow()
         {
@@ -45,12 +49,19 @@ namespace PomodoroBorderTimer
         private void PomodoroBorderTimer_Loaded(object sender, RoutedEventArgs e)
         {
             // Set everything up
-            var timer_sequence = ConfigurationManager.AppSettings.Get("TimerSequence");
-            this.timer_sequence = ParseTimerSequence(timer_sequence);
-            var work_colors = ConfigurationManager.AppSettings.Get("WorkColors");
-            this.work_colors = ParseColors(work_colors);
-            var break_colors = ConfigurationManager.AppSettings.Get("BreakColors");
-            this.break_colors = ParseColors(break_colors);
+            var timer_sequence_str = ConfigurationManager.AppSettings.Get("TimerSequence");
+            timer_sequence = ParseTimerSequence(timer_sequence_str);
+            var work_colors_str = ConfigurationManager.AppSettings.Get("WorkColors");
+            work_colors = ParseColors(work_colors_str);
+            var break_colors_str = ConfigurationManager.AppSettings.Get("BreakColors");
+            break_colors = ParseColors(break_colors_str);
+            var outline_width_str = ConfigurationManager.AppSettings.Get("OutlineWidth");
+            width = double.Parse(outline_width_str);
+            SetWidth(width);
+
+            // where to Start
+            then = DateTime.Now;
+            time_remaining = timer_sequence[0].time;
 
             // Start the timer
             dispatcher_timer.Tick += Dispatcher_timer_Tick;
@@ -137,12 +148,63 @@ namespace PomodoroBorderTimer
         private void SetColor(Color c)
         {
             outline.BorderBrush = new SolidColorBrush(c);
+            outline.InvalidateVisual();
+        }
+
+        private void SetWidth(double width)
+        {
+            outline.BorderThickness = new Thickness(width, width, width, 0);
+            outline.InvalidateVisual();
         }
 
         private void Dispatcher_timer_Tick(object sender, EventArgs e)
         {
-            // update
-            SetColor(work_colors[0]);
+            var now = DateTime.Now;
+            var diff = now - then;
+            then = now;
+            time_remaining -= diff;
+            if (time_remaining.TotalSeconds <= 0)
+            {
+                current_timer_index = ++current_timer_index % timer_sequence.Length;
+                time_remaining = timer_sequence[current_timer_index].time;
+                outline.Dispatcher.BeginInvoke((Action)async delegate
+                {
+                    const int enlarge_to = 5;
+                    for (int i = 1; i < enlarge_to; i++)
+                    {
+                        SetWidth(width * i);
+                        await Task.Delay(120);
+                    }
+                    for (int i = enlarge_to; i > 0; i--)
+                    {
+                        SetWidth(width * i);
+                        await Task.Delay(120);
+                    }
+                });
+            }
+            else
+            {
+                Color c = default(Color);
+                var info = timer_sequence[current_timer_index];
+                var color_arr = info.type == TimerTypes.Work ? work_colors : break_colors;
+
+                var part_complete = (info.time.TotalSeconds - time_remaining.TotalSeconds) / info.time.TotalSeconds;
+                var color_split = color_arr.Length - 1;
+                if (color_split > 0)
+                {
+                    var split_part = color_split * part_complete;
+                    var lower_index = (int)split_part;
+                    var color_diff = split_part - lower_index;
+                    var fadeout_color = Color.Multiply(color_arr[lower_index], 1 - (float)color_diff);
+                    var fadein_color = Color.Multiply(color_arr[lower_index+1], (float)color_diff);
+                    c = Color.Add(fadeout_color, fadein_color);
+                }
+                else if (color_split == 0)
+                {
+                    c = color_arr[0];
+                }
+                SetColor(c);
+            }
         }
 
         private void Notify_icon_Click(object sender, EventArgs e)
@@ -152,7 +214,7 @@ namespace PomodoroBorderTimer
                 menu.IsOpen = true;
                 menu.Dispatcher.BeginInvoke((Action)async delegate
                 {
-                    await Task.Delay(1500);
+                    await Task.Delay(2500);
                     menu.IsOpen = false;
                 });
             }
@@ -171,15 +233,22 @@ namespace PomodoroBorderTimer
 
         private void Restart_Timer_Click(object sender, RoutedEventArgs e)
         {
-
+            current_timer_index = 0;
+            time_remaining = timer_sequence[current_timer_index].time;
         }
 
         private void PlayPause_Click(object sender, RoutedEventArgs e)
         {
             if (dispatcher_timer.IsEnabled)
+            {
                 dispatcher_timer.Stop();
+                PlayPause.Header = "Start Timer";
+            }
             else
+            {
                 dispatcher_timer.Start();
+                PlayPause.Header = "Pause Timer";
+            }
         }
     }
 }
