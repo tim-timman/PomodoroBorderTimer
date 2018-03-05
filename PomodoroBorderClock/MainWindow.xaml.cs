@@ -33,6 +33,12 @@ namespace PomodoroBorderTimer
         private DateTime then;
         private int current_timer_index = 0;
 
+        private string GetCurrentStatus() {
+            var type = timer_sequence[current_timer_index].type == TimerTypes.Work ? "Work" : "Break";
+            var remaing =  time_remaining.ToString(@"mm\:ss");
+            return $"{type}: {remaing} [{current_timer_index}]";
+        }
+
         public MainWindow()
         {
             InitializeComponent();
@@ -44,6 +50,8 @@ namespace PomodoroBorderTimer
             notify_icon.Icon = new System.Drawing.Icon("Pomodoro.ico");
             notify_icon.Click += Notify_icon_Click;
             notify_icon.Visible = true;
+
+            DataContext = this;
         }
 
         private void PomodoroBorderTimer_Loaded(object sender, RoutedEventArgs e)
@@ -211,10 +219,11 @@ namespace PomodoroBorderTimer
         {
             if ((e as System.Windows.Forms.MouseEventArgs).Button == System.Windows.Forms.MouseButtons.Right)
             {
+                label.Content = GetCurrentStatus();
                 menu.IsOpen = true;
                 menu.Dispatcher.BeginInvoke((Action)async delegate
                 {
-                    await Task.Delay(2500);
+                    await Task.Delay(5000);
                     menu.IsOpen = false;
                 });
             }
@@ -249,6 +258,18 @@ namespace PomodoroBorderTimer
                 dispatcher_timer.Start();
                 PlayPause.Header = "Pause Timer";
             }
+        }
+
+        private void Next_Click(object sender, RoutedEventArgs e)
+        {
+            current_timer_index = ++current_timer_index % timer_sequence.Length;
+            time_remaining = timer_sequence[current_timer_index].time;
+        }
+
+        private void Previous_Click(object sender, RoutedEventArgs e)
+        {
+            current_timer_index = (--current_timer_index + timer_sequence.Length) % timer_sequence.Length;
+            time_remaining = timer_sequence[current_timer_index].time;
         }
     }
 }

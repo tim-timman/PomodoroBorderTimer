@@ -9,7 +9,10 @@
     <Grid Margin="1">
         <Grid.ContextMenu>
             <ContextMenu Name="menu">
+                <Label Name="label" Content="" />
                 <MenuItem Name="PlayPause" Header="Pause Timer" Click="PlayPause_Click" />
+                <MenuItem Header="Next" Click="Next_Click" />
+                <MenuItem Header="Previous" Click="Previous_Click" />
                 <MenuItem Header="Reset Timer" Click="Restart_Timer_Click" />
                 <Separator />
                 <MenuItem Header="Close" Click="Close_Click" />
